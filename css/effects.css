@@ -1,0 +1,156 @@
+/* Enhanced effects for tower defense game */
+
+/* Projectile effects */
+.projectile {
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    pointer-events: none;
+  }
+  
+  .projectile::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    filter: blur(2px);
+    opacity: 0.7;
+    z-index: -1;
+    animation: pulsate 0.5s infinite alternate;
+  }
+  
+  .projectile-red {
+    background: radial-gradient(circle at 30% 30%, #ff4444, #cc0000);
+    box-shadow: 0 0 10px rgba(255,0,0,0.8);
+  }
+  
+  .projectile-red::after {
+    background: radial-gradient(circle at center, rgba(255,100,100,0.6), rgba(255,0,0,0));
+    box-shadow: 0 0 15px rgba(255,100,100,0.8);
+  }
+  
+  .projectile-blue {
+    background: radial-gradient(circle at 30% 30%, #44aaff, #0066cc);
+    box-shadow: 0 0 10px rgba(0,100,255,0.8);
+  }
+  
+  .projectile-blue::after {
+    background: radial-gradient(circle at center, rgba(100,150,255,0.6), rgba(0,100,255,0));
+    box-shadow: 0 0 15px rgba(100,150,255,0.8);
+  }
+  
+  .projectile-green {
+    background: radial-gradient(circle at 30% 30%, #44ff44, #00cc00);
+    box-shadow: 0 0 10px rgba(0,255,0,0.8);
+  }
+  
+  .projectile-green::after {
+    background: radial-gradient(circle at center, rgba(100,255,100,0.6), rgba(0,255,0,0));
+    box-shadow: 0 0 15px rgba(100,255,100,0.8);
+  }
+  
+  /* Impact effects */
+  .impact {
+    position: absolute;
+    border-radius: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 1;
+    pointer-events: none;
+    z-index: 8;
+    animation: impact 0.5s ease-out forwards;
+  }
+  
+  .impact-red {
+    background: radial-gradient(circle, rgba(255,100,100,0.8) 0%, rgba(255,0,0,0) 70%);
+    box-shadow: 0 0 15px rgba(255,0,0,0.6);
+  }
+  
+  .impact-blue {
+    background: radial-gradient(circle, rgba(100,150,255,0.8) 0%, rgba(0,100,255,0) 70%);
+    box-shadow: 0 0 15px rgba(0,100,255,0.6);
+  }
+  
+  .impact-green {
+    background: radial-gradient(circle, rgba(100,255,100,0.8) 0%, rgba(0,255,0,0) 70%);
+    box-shadow: 0 0 15px rgba(0,255,0,0.6);
+  }
+  
+  /* Status effect overlays for enemies */
+  .frost-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(100,200,255,0.7) 30%, rgba(200,240,255,0.3) 70%);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    animation: frost-pulse 2s infinite;
+  }
+  
+  .fire-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 30% 70%, rgba(255,100,0,0.8) 0%, rgba(255,0,0,0.6) 30%, rgba(255,0,0,0) 70%),
+      radial-gradient(circle at 70% 30%, rgba(255,150,0,0.8) 0%, rgba(255,100,0,0.6) 30%, rgba(255,0,0,0) 70%);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    animation: fire-flicker 0.5s infinite alternate;
+  }
+  
+  /* Animations */
+  @keyframes pulsate {
+    0% { transform: scale(0.8); opacity: 0.7; }
+    100% { transform: scale(1.2); opacity: 0.9; }
+  }
+  
+  @keyframes impact {
+    0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+  }
+  
+  @keyframes frost-pulse {
+    0% { opacity: 0.7; filter: blur(1px); }
+    50% { opacity: 0.9; filter: blur(2px); }
+    100% { opacity: 0.7; filter: blur(1px); }
+  }
+  
+  @keyframes fire-flicker {
+    0% { opacity: 0.7; transform: scale(1); }
+    25% { opacity: 0.8; }
+    50% { opacity: 0.9; transform: scale(1.05); }
+    75% { opacity: 0.8; }
+    100% { opacity: 1; transform: scale(1.1); }
+  }
+  
+  /* Death animation */
+  @keyframes enemy-death {
+    0% { transform: rotate(0) translateY(0); opacity: 1; }
+    50% { transform: rotate(60deg) translateY(10px); opacity: 0.7; }
+    100% { transform: rotate(90deg) translateY(20px); opacity: 0; }
+  }
+  
+  .dying {
+    animation: enemy-death 1s forwards;
+  }
+  
+  /* Hit animation */
+  @keyframes enemy-hit {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    50% { transform: translateX(2px); }
+    75% { transform: translateX(-2px); }
+    100% { transform: translateX(0); }
+  }
+  
+  .hit {
+    animation: enemy-hit 0.3s ease-in-out;
+  }
