@@ -1009,6 +1009,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   
-  const game = new Game();
-  game.prepareGame();
+  window.game = new Game();
+  window.game.prepareGame(); 
 });
