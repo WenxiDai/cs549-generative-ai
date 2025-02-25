@@ -1,4 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Preload background images
+  const preloadImages = ['../assets/images/splash_screen_mobile.webp', '../assets/images/splash_screen_tablet.webp'];
+  preloadImages.forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
+
+  // Force background image refresh on orientation change 
+  window.addEventListener('orientationchange', function() {
+    setTimeout(function() {
+      const currentBg = document.body.style.backgroundImage;
+      document.body.style.backgroundImage = 'none';
+      setTimeout(function() {
+        document.body.style.backgroundImage = currentBg;
+      }, 50);
+    }, 100);
+  });
+  
   class GameUI {
     constructor() {
       // UI screens
