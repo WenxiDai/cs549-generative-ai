@@ -1,2 +1,2 @@
 # cs549-generative-ai
-generative game
+A tower defense game developed based on generative AI.

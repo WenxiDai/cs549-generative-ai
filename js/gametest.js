@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 50);
     }, 100);
   });
-  
+
   class GameUI {
     constructor() {
       // UI screens
@@ -58,6 +58,22 @@ document.addEventListener('DOMContentLoaded', () => {
       window.addEventListener('resize', this.handleResize.bind(this));
     }
     
+    // Add this method to directly set the background image
+    setGameOverBackground(isMobile) {
+      const gameOverScreen = document.getElementById('game-over-screen');
+      
+      // Apply the image directly to the element's style
+      if (isMobile) {
+        gameOverScreen.style.backgroundImage = "url('../assets/images/lose_splash_mobile.webp')";
+      } else {
+        gameOverScreen.style.backgroundImage = "url('../assets/images/lose_splash_tablet.webp')";
+      }
+      
+      // Make sure the background covers the entire screen
+      gameOverScreen.style.backgroundSize = "cover";
+      gameOverScreen.style.backgroundPosition = "center center";
+    }
+
     // UI display updates
     updateHealthDisplay(health) {
       this.healthDisplay.textContent = health;
@@ -118,10 +134,64 @@ document.addEventListener('DOMContentLoaded', () => {
       startGameSound.play();
     }
     
-    endGame() {
+    endGame(wave) {
       const endGameSound = document.getElementById('end-game-sound');
       this.swapToScreen(this.gameOverScreen);
       endGameSound.play();
+
+      // Set the correct background based on device size
+      this.setGameOverBackground(this.isMobile);
+
+      const gameOverMessage = document.getElementById('game-over-message');
+      gameOverMessage.innerHTML = `
+        <h2>Game Over!</h2>
+        <p>You survived until wave ${wave}</p>
+        <p>Final score: ${score}</p>
+      `;
+      this.swapToScreen(this.gameOverScreen);
+      
+      // Preload the correct game over background based on screen size
+      const gameOverBg = this.isMobile ? 
+        '../assets/images/lose_splash_mobile.webp' : 
+        '../assets/images/lose_splash_tablet.webp';
+      
+      const preloadImg = new Image();
+      preloadImg.src = gameOverBg;
+      
+      // Ensure we're using the right background
+      this.updateGameOverBackground();
+
+    }
+
+    // Add this new method to update background based on current dimensions
+    updateGameOverBackground() {
+      const isMobileSize = window.innerWidth <= 600;
+      const gameOverScreen = document.getElementById('game-over-screen');
+      
+      if (isMobileSize) {
+        gameOverScreen.style.setProperty('--game-over-bg', 'url("../assets/images/lose_splash_mobile.webp")');
+      } else {
+        gameOverScreen.style.setProperty('--game-over-bg', 'url("../assets/images/lose_splash_tablet.webp")');
+      }
+    }
+
+    // Modify handleResize to also update game over background
+    handleResize() {
+      this.viewportWidth = window.innerWidth;
+      this.viewportHeight = window.innerHeight;
+      this.isMobile = this.viewportWidth <= 600;
+      
+      // If we're on the game over screen, update its background
+      if (this.gameOverScreen.classList.contains('active')) {
+        this.setGameOverBackground(this.isMobile);
+      }
+      
+      // Use mobile layout if needed
+      if (this.isMobile) {
+        this.adjustMobileLayout();
+      } else {
+        this.adjustDesktopLayout();
+      }
     }
     
     mainMenu() {
@@ -424,6 +494,9 @@ document.addEventListener('DOMContentLoaded', () => {
             alert("Game Over!");
             clearInterval(this.gameLoopInterval);
             this.waveActive = false;
+            
+            // Show game over screen with current wave
+            this.ui.endGame(this.currentWave);
           }
         }
         
@@ -837,7 +910,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
-    
+
     prepareGame() {
       const gameContainer = document.getElementById('game-screen');
       // Prepare game container DOM elements here
@@ -928,6 +1001,10 @@ document.addEventListener('DOMContentLoaded', () => {
           this.ui.swapToScreen(this.ui.gameContainer);
           this.resume();
         }, { once: true });
+      });
+      playAgainButton.addEventListener('click', () => {
+        this.logic.resetGame();
+        this.startGame();
       });
     }
   }

@@ -626,3 +626,65 @@ body {
   position: relative;
   z-index: 3;
 }
+
+/* Add these styles to css/style.css or css/mobile.css */
+
+/* Game Over Screen Styling */
+#game-over-screen {
+  position: relative;
+  z-index: 100;
+}
+
+#game-over-screen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('../assets/images/lose_splash_mobile.webp');
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  z-index: -1;
+  opacity: 0.9;
+}
+
+#game-over-screen .container {
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+  backdrop-filter: blur(5px);
+  max-width: 90%;
+}
+
+#game-over-message {
+  color: #e94560;
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  text-align: center;
+}
+
+/* Tablet and desktop background (3:4) */
+@media screen and (min-width: 601px) {
+  #game-over-screen::before {
+    background-image: url('../assets/images/lose_splash_tablet.webp');
+  }
+  
+  #game-over-message {
+    font-size: 32px;
+  }
+}
+
+/* Animation for game over screen */
+@keyframes fadeInGameOver {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#game-over-screen.active .container {
+  animation: fadeInGameOver 0.8s ease-out forwards;
+}
