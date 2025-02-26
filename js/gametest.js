@@ -467,6 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
           enemy.freezeCooldown--;
         }
         
+        // Don't move if frozen
         if (enemy.isFrozen) {
           enemy.freezeTimer--;
           if (enemy.freezeTimer <= 0) {
@@ -477,29 +478,35 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         
+        // Move to next path position
         enemy.pathIndex++;
         if (enemy.pathIndex < this.randomPath.length) {
           const { r, c } = this.randomPath[enemy.pathIndex];
-          const { x, y } = this.getCellCenter(r, c);
-          enemy.x = x;
-          enemy.y = y;
-          enemy.element.style.left = x + "px";
-          enemy.element.style.top = y + "px";
+          const cellCenter = this.getCellCenter(r, c);
+          
+          // Update position
+          enemy.x = cellCenter.x;
+          enemy.y = cellCenter.y;
+          
+          // Update DOM element position
+          enemy.element.style.left = enemy.x + "px";
+          enemy.element.style.top = enemy.y + "px";
         } else {
+          // Enemy reached end of path
           enemy.element.remove();
           this.enemies[i] = null;
           this.playerHealth--;
           this.ui.updateHealthDisplay(this.playerHealth);
+          
           if (this.playerHealth <= 0) {
             alert("Game Over!");
             clearInterval(this.gameLoopInterval);
             this.waveActive = false;
-            
-            // Show game over screen with current wave
             this.ui.endGame(this.currentWave);
           }
         }
         
+        // Handle fire effect
         if (enemy.isOnFire) {
           enemy.fireTimer--;
           if (enemy.fireTimer <= 0) {
@@ -510,6 +517,8 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         }
       });
+      
+      // Remove null entries
       this.enemies = this.enemies.filter(e => e !== null);
     }
     

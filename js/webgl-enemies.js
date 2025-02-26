@@ -1,65 +1,102 @@
-// WebGL Enemies Renderer
+// Improved WebGL Enemy Renderer with better error handling and device compatibility
 class EnemyRenderer {
-    constructor(gameArea) {
-      this.gameArea = gameArea;
-      this.canvas = document.createElement('canvas');
-      this.canvas.id = 'enemy-canvas';
-      this.canvas.style.position = 'absolute';
-      this.canvas.style.top = '0';
-      this.canvas.style.left = '0';
-      this.canvas.style.width = '100%';
-      this.canvas.style.height = '100%';
-      this.canvas.style.pointerEvents = 'none'; // Allow clicks to pass through
-      this.canvas.style.zIndex = '5'; // Above the grid but below UI elements
-      
-      // Add canvas to game area
-      this.gameArea.appendChild(this.canvas);
-      
-      // Initialize WebGL
-      this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
-      if (!this.gl) {
-        console.error('WebGL not supported, falling back to canvas renderer');
-        this.fallbackToCanvas();
-        return;
-      }
-      
-      // Set canvas dimensions
-      this.resizeCanvas();
-      window.addEventListener('resize', () => this.resizeCanvas());
-      
-      // Initialize shaders
-      this.initShaders();
-      
-      // Load soldier model
-      this.loadSoldierModel();
-      
-      // Animation properties
-      this.lastFrame = 0;
-      this.enemyInstances = {};
-      this.enemyCount = 0;
-      
-      // Start render loop
-      this.animate();
+  constructor(gameArea) {
+    this.gameArea = gameArea;
+    this.canvas = document.createElement('canvas');
+    this.canvas.id = 'enemy-canvas';
+    this.canvas.style.position = 'absolute';
+    this.canvas.style.top = '0';
+    this.canvas.style.left = '0';
+    this.canvas.style.width = '100%';
+    this.canvas.style.height = '100%';
+    this.canvas.style.pointerEvents = 'none'; // Allow clicks to pass through
+    this.canvas.style.zIndex = '5'; // Above the grid but below UI elements
+    
+    // Add canvas to game area
+    this.gameArea.appendChild(this.canvas);
+    
+    // Initialize WebGL with better error handling
+    this.gl = this.initWebGL(this.canvas);
+    if (!this.gl) {
+      console.warn('WebGL not supported or failed to initialize, falling back to canvas renderer');
+      this.fallbackToCanvas();
+      return;
     }
     
-    resizeCanvas() {
-      // Get the dimensions of the game area
-      const rect = this.gameArea.getBoundingClientRect();
-      this.canvas.width = rect.width;
-      this.canvas.height = rect.height;
+    // Set canvas dimensions
+    this.resizeCanvas();
+    window.addEventListener('resize', () => this.resizeCanvas());
+    
+    // Initialize shaders
+    if (!this.initShaders()) {
+      console.warn('Failed to initialize WebGL shaders, falling back to canvas renderer');
+      this.fallbackToCanvas();
+      return;
+    }
+    
+    // Load soldier model
+    this.loadSoldierModel();
+    
+    // Animation properties
+    this.lastFrame = 0;
+    this.enemyInstances = {};
+    this.enemyCount = 0;
+    
+    // Start render loop
+    this.animate();
+
+    console.log('WebGL Enemy Renderer initialized successfully');
+  }
+
+  initWebGL(canvas) {
+    let gl = null;
+    try {
+      // Try to grab the standard context. If it fails, fallback to experimental.
+      gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    } catch(e) {
+      console.error('Error initializing WebGL: ' + e.message);
+      return null;
+    }
+    
+    // If we don't have a GL context, give up now
+    if (!gl) {
+      console.error('Unable to initialize WebGL. Your browser may not support it.');
+      return null;
+    }
+    
+    return gl;
+  }
+  
+  resizeCanvas() {
+    // Get the dimensions of the game area
+    const rect = this.gameArea.getBoundingClientRect();
+    
+    // Set canvas size to match game area
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
+    
+    // Also update WebGL viewport if GL context exists
+    if (this.gl) {
       this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     }
     
-    fallbackToCanvas() {
-      // If WebGL is not supported, use Canvas 2D as fallback
-      this.gl = null;
-      this.ctx = this.canvas.getContext('2d');
-      this.renderType = 'canvas';
-    }
-    
-    initShaders() {
-      // Vertex shader program
+    console.log(`Canvas resized to ${this.canvas.width}x${this.canvas.height}`);
+  }
+  
+  fallbackToCanvas() {
+    // If WebGL is not supported, use Canvas 2D as fallback
+    this.gl = null;
+    this.ctx = this.canvas.getContext('2d');
+    this.renderType = 'canvas';
+    console.log('Using Canvas 2D fallback for enemy rendering');
+  }
+  
+  initShaders() {
+    try {
+      // Vertex shader program - simplified for reliability
       const vsSource = `
+        precision mediump float;
+
         attribute vec4 aVertexPosition;
         attribute vec3 aVertexNormal;
         attribute vec2 aTextureCoord;
@@ -87,8 +124,10 @@ class EnemyRenderer {
         }
       `;
   
-      // Fragment shader program
+      // Fragment shader program - simplified for reliability
       const fsSource = `
+        precision mediump float;
+
         varying highp vec2 vTextureCoord;
         varying highp vec3 vLighting;
         
@@ -119,6 +158,11 @@ class EnemyRenderer {
       // Initialize shader program
       const vertexShader = this.loadShader(this.gl.VERTEX_SHADER, vsSource);
       const fragmentShader = this.loadShader(this.gl.FRAGMENT_SHADER, fsSource);
+      
+      if (!vertexShader || !fragmentShader) {
+        console.error("Failed to compile shaders");
+        return false;
+      }
   
       // Create the shader program
       this.shaderProgram = this.gl.createProgram();
@@ -129,7 +173,7 @@ class EnemyRenderer {
       // Check if shader program was created successfully
       if (!this.gl.getProgramParameter(this.shaderProgram, this.gl.LINK_STATUS)) {
         console.error('Unable to initialize the shader program: ' + this.gl.getProgramInfoLog(this.shaderProgram));
-        return;
+        return false;
       }
   
       // Get shader program info
@@ -150,9 +194,16 @@ class EnemyRenderer {
           uEffectType: this.gl.getUniformLocation(this.shaderProgram, 'uEffectType'),
         },
       };
+      
+      return true;
+    } catch (error) {
+      console.error('Error initializing shaders:', error);
+      return false;
     }
-    
-    loadShader(type, source) {
+  }
+  
+  loadShader(type, source) {
+    try {
       const shader = this.gl.createShader(type);
       this.gl.shaderSource(shader, source);
       this.gl.compileShader(shader);
@@ -165,175 +216,253 @@ class EnemyRenderer {
       }
   
       return shader;
+    } catch (error) {
+      console.error('Error loading shader:', error);
+      return null;
     }
+  }
+  
+  loadSoldierModel() {
+    // Create simplified model for better compatibility
+    this.soldierModel = {
+      // Red enemy (basic soldier)
+      red: {
+        vertices: this.createSimpleSoldierVertices(1.0, 0.5, 0.5),
+        texture: this.loadTexture('red'),
+        animationFrames: 8,
+      },
+      // Green enemy (tougher soldier)
+      green: {
+        vertices: this.createSimpleSoldierVertices(0.5, 1.0, 0.5),
+        texture: this.loadTexture('green'),
+        animationFrames: 8,
+      }
+    };
     
-    loadSoldierModel() {
-      // Simple soldier model
-      this.soldierModel = {
-        // Red enemy (basic soldier)
-        red: {
-          vertices: this.createSoldierVertices(1.0, 0.5, 0.5),
-          texture: this.loadTexture('assets/images/enemy_red.png'),
-          animationFrames: 8,
-        },
-        // Green enemy (tougher soldier)
-        green: {
-          vertices: this.createSoldierVertices(0.5, 1.0, 0.5),
-          texture: this.loadTexture('assets/images/enemy_green.png'),
-          animationFrames: 8,
-        }
-      };
+    // Create buffers for the models
+    this.createBuffers();
+  }
+  
+  createSimpleSoldierVertices(r, g, b) {
+    // Create a simplified soldier shape - just a simple box for reliability
+    const vertices = [
+      // Front face
+      -0.5, -0.5,  0.5,
+       0.5, -0.5,  0.5,
+       0.5,  0.5,  0.5,
+      -0.5,  0.5,  0.5,
       
-      // Create buffers for the models
-      this.createBuffers();
-    }
+      // Back face
+      -0.5, -0.5, -0.5,
+      -0.5,  0.5, -0.5,
+       0.5,  0.5, -0.5,
+       0.5, -0.5, -0.5,
+      
+      // Top face
+      -0.5,  0.5, -0.5,
+      -0.5,  0.5,  0.5,
+       0.5,  0.5,  0.5,
+       0.5,  0.5, -0.5,
+      
+      // Bottom face
+      -0.5, -0.5, -0.5,
+       0.5, -0.5, -0.5,
+       0.5, -0.5,  0.5,
+      -0.5, -0.5,  0.5,
+      
+      // Right face
+       0.5, -0.5, -0.5,
+       0.5,  0.5, -0.5,
+       0.5,  0.5,  0.5,
+       0.5, -0.5,  0.5,
+      
+      // Left face
+      -0.5, -0.5, -0.5,
+      -0.5, -0.5,  0.5,
+      -0.5,  0.5,  0.5,
+      -0.5,  0.5, -0.5,
+    ];
     
-    createSoldierVertices(r, g, b) {
-      // Create a simplified soldier shape - a more complex model would be used in production
-      // This is a simplified humanoid shape made of boxes for head, torso, arms, and legs
-      
-      // Create a more detailed soldier model with head, torso, arms, and legs
-      const vertices = [];
-      const normals = [];
-      const textureCoordinates = [];
-      const indices = [];
-      
-      // Helper function to add a box
-      const addBox = (x, y, z, width, height, depth, color) => {
-        const startIndex = vertices.length / 3;
-        
-        // Define the 8 vertices of the box
-        vertices.push(
-          // Front face
-          x - width/2, y - height/2, z + depth/2,
-          x + width/2, y - height/2, z + depth/2,
-          x + width/2, y + height/2, z + depth/2,
-          x - width/2, y + height/2, z + depth/2,
-          
-          // Back face
-          x - width/2, y - height/2, z - depth/2,
-          x - width/2, y + height/2, z - depth/2,
-          x + width/2, y + height/2, z - depth/2,
-          x + width/2, y - height/2, z - depth/2,
-        );
-        
-        // Define normals for lighting
-        normals.push(
-          // Front
-          0.0, 0.0, 1.0,
-          0.0, 0.0, 1.0,
-          0.0, 0.0, 1.0,
-          0.0, 0.0, 1.0,
-          
-          // Back
-          0.0, 0.0, -1.0,
-          0.0, 0.0, -1.0,
-          0.0, 0.0, -1.0,
-          0.0, 0.0, -1.0,
-        );
-        
-        // Texture coordinates
-        textureCoordinates.push(
-          // Front
-          0.0, 1.0,
-          1.0, 1.0,
-          1.0, 0.0,
-          0.0, 0.0,
-          
-          // Back
-          1.0, 1.0,
-          1.0, 0.0,
-          0.0, 0.0,
-          0.0, 1.0,
-        );
-        
-        // Indices - creating triangles
-        indices.push(
-          startIndex + 0, startIndex + 1, startIndex + 2,
-          startIndex + 0, startIndex + 2, startIndex + 3,
-          
-          startIndex + 4, startIndex + 5, startIndex + 6,
-          startIndex + 4, startIndex + 6, startIndex + 7,
-          
-          startIndex + 0, startIndex + 3, startIndex + 5,
-          startIndex + 0, startIndex + 5, startIndex + 4,
-          
-          startIndex + 1, startIndex + 7, startIndex + 6,
-          startIndex + 1, startIndex + 6, startIndex + 2,
-          
-          startIndex + 3, startIndex + 2, startIndex + 6,
-          startIndex + 3, startIndex + 6, startIndex + 5,
-          
-          startIndex + 0, startIndex + 4, startIndex + 7,
-          startIndex + 0, startIndex + 7, startIndex + 1,
-        );
-      };
-      
-      // Create soldier parts - all positioned relative to center
-      // Head
-      addBox(0, 0.8, 0, 0.4, 0.4, 0.4);
-      
-      // Torso
-      addBox(0, 0.3, 0, 0.6, 0.7, 0.3);
-      
-      // Arms
-      addBox(-0.4, 0.3, 0, 0.2, 0.6, 0.2); // Left arm
-      addBox(0.4, 0.3, 0, 0.2, 0.6, 0.2);  // Right arm
-      
-      // Legs
-      addBox(-0.2, -0.4, 0, 0.2, 0.7, 0.2); // Left leg
-      addBox(0.2, -0.4, 0, 0.2, 0.7, 0.2);  // Right leg
-      
-      return {
-        position: vertices,
-        normal: normals,
-        textureCoord: textureCoordinates,
-        indices: indices,
-      };
-    }
+    const indices = [
+      0,  1,  2,      0,  2,  3,    // front
+      4,  5,  6,      4,  6,  7,    // back
+      8,  9,  10,     8,  10, 11,   // top
+      12, 13, 14,     12, 14, 15,   // bottom
+      16, 17, 18,     16, 18, 19,   // right
+      20, 21, 22,     20, 22, 23,   // left
+    ];
     
-    loadTexture(url) {
+    // Simple normals for each face
+    const normals = [
+      // Front face
+      0.0,  0.0,  1.0,
+      0.0,  0.0,  1.0,
+      0.0,  0.0,  1.0,
+      0.0,  0.0,  1.0,
+      
+      // Back face
+      0.0,  0.0, -1.0,
+      0.0,  0.0, -1.0,
+      0.0,  0.0, -1.0,
+      0.0,  0.0, -1.0,
+      
+      // Top face
+      0.0,  1.0,  0.0,
+      0.0,  1.0,  0.0,
+      0.0,  1.0,  0.0,
+      0.0,  1.0,  0.0,
+      
+      // Bottom face
+      0.0, -1.0,  0.0,
+      0.0, -1.0,  0.0,
+      0.0, -1.0,  0.0,
+      0.0, -1.0,  0.0,
+      
+      // Right face
+      1.0,  0.0,  0.0,
+      1.0,  0.0,  0.0,
+      1.0,  0.0,  0.0,
+      1.0,  0.0,  0.0,
+      
+      // Left face
+     -1.0,  0.0,  0.0,
+     -1.0,  0.0,  0.0,
+     -1.0,  0.0,  0.0,
+     -1.0,  0.0,  0.0
+    ];
+    
+    // Simple texture coordinates
+    const textureCoordinates = [
+      // Front
+      0.0,  1.0,
+      1.0,  1.0,
+      1.0,  0.0,
+      0.0,  0.0,
+      // Back
+      0.0,  1.0,
+      0.0,  0.0,
+      1.0,  0.0,
+      1.0,  1.0,
+      // Top
+      0.0,  1.0,
+      0.0,  0.0,
+      1.0,  0.0,
+      1.0,  1.0,
+      // Bottom
+      0.0,  1.0,
+      1.0,  1.0,
+      1.0,  0.0,
+      0.0,  0.0,
+      // Right
+      0.0,  1.0,
+      0.0,  0.0,
+      1.0,  0.0,
+      1.0,  1.0,
+      // Left
+      0.0,  1.0,
+      1.0,  1.0,
+      1.0,  0.0,
+      0.0,  0.0
+    ];
+    
+    return {
+      position: vertices,
+      normal: normals,
+      textureCoord: textureCoordinates,
+      indices: indices
+    };
+  }
+  
+  loadTexture(type) {
+    try {
       const texture = this.gl.createTexture();
       this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
       
       // Fill with a placeholder color until the image is loaded
-      this.gl.texImage2D(
-        this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, 
-        this.gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255])
-      );
-      
-      // Create a placeholder image for now
-      // In a production environment, you would load actual textures
-      const image = new Image();
-      image.onload = () => {
-        this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+      if (type === 'red') {
+        // Red enemy - dark red color
         this.gl.texImage2D(
-          this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, 
-          this.gl.UNSIGNED_BYTE, image
+          this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, 
+          this.gl.UNSIGNED_BYTE, new Uint8Array([200, 50, 50, 255])
         );
-        
-        // WebGL1 has different requirements for power-of-2 vs. non-power-of-2 images
-        if (this.isPowerOf2(image.width) && this.isPowerOf2(image.height)) {
-          this.gl.generateMipmap(this.gl.TEXTURE_2D);
-        } else {
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-          this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+      } else {
+        // Green enemy - dark green color
+        this.gl.texImage2D(
+          this.gl.TEXTURE_2D, 0, this.gl.RGBA, 1, 1, 0, this.gl.RGBA, 
+          this.gl.UNSIGNED_BYTE, new Uint8Array([50, 200, 50, 255])
+        );
+      }
+      
+      // Try to load actual texture from multiple possible locations
+      const image = new Image();
+      
+      // Set up proper error handling for the image
+      image.onerror = (e) => {
+        console.warn(`Failed to load enemy texture for ${type} enemy, using color fallback`, e);
+        // The fallback solid color is already set above
+      };
+      
+      image.onload = () => {
+        try {
+          this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+          this.gl.texImage2D(
+            this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, 
+            this.gl.UNSIGNED_BYTE, image
+          );
+          
+          // WebGL1 has different requirements for power-of-2 vs. non-power-of-2 images
+          if (this.isPowerOf2(image.width) && this.isPowerOf2(image.height)) {
+            this.gl.generateMipmap(this.gl.TEXTURE_2D);
+          } else {
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+            this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+          }
+          console.log(`Successfully loaded texture for ${type} enemy`);
+        } catch (err) {
+          console.error(`Error applying texture for ${type} enemy:`, err);
         }
       };
       
-      // For development - use a solid color as texture
-      // In production, replace with actual texture files
-      image.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsQAAA7EAZUrDhsAAABeSURBVFhH7dehDcAwDERRZ4PMmKzBYkwW5o0Q3RX1LeDlbeCnJLuZHY/dPe6v9ViP9VDdimVZEFiWBYFlWRBYlgWBZVkQWJYFgWVZEFiWBYFlWRBYlgWBZVm4LLv6fQFJ+RE79yvrKAAAAABJRU5ErkJggg==';
+      // Try to load the image from different possible paths
+      const possiblePaths = [
+        `assets/images/enemy_${type}.png`,
+        `../assets/images/enemy_${type}.png`,
+        `./assets/images/enemy_${type}.png`,
+        `/assets/images/enemy_${type}.png`
+      ];
+      
+      // We'll use an embedded data URL as fallback for reliability
+      // Use a colored rectangle as fallback
+      const colorData = type === 'red' ? 
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAApklEQVR42mNkGAWjIUCTENizZ0/0////ZzMyMgaTYhYjIyPj379/1Tk5Of6S4gB0y0dUCIyCUTAKRsEoGAWjYBSMglEwamvi5s2b2f/+/bv+9+/f/6TUbkxMTIxsbGwFJSUl9SQHwbFjx04DnVBPTsY2btw4DUhPJTkIyskNgv///2eSGgTEJkGyg2AUjIJRMApGwSgYBaNgFIyCUTAKRsEoGAWjYEQDAKbtK+u95A+EAAAAAElFTkSuQmCC' :
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAApklEQVR42mNkGAWjIUCTENizZ0/0////ZzMyMgaTYhYjIyPj379/1Tk5Of6S4gB0y0dUCIyCUTAKRsEoGAWjYBSMglEwamvi5s2b2f/+/bv+9+/f/6TUbkxMTIxsbGwFJSUl9SQHwbFjx04DnVBPTsY2btw4DUhPJTkIyskNgv///2eSGgTEJkGyg2AUjIJRMApGwSgYBaNgFIyCUTAKRsEoGAWjYEQDAKbtK+uZQ4RfAAAAAElFTkSuQmCC';
+      
+      image.src = type === 'red' ? colorData : colorData;
+      
+      // Try loading from possible paths
+      for (const path of possiblePaths) {
+        const tempImg = new Image();
+        tempImg.onload = () => {
+          // If this path works, use it for the actual texture
+          image.src = path;
+        };
+        tempImg.src = path;
+      }
       
       return texture;
+    } catch (error) {
+      console.error('Error creating texture:', error);
+      return null;
     }
-    
-    isPowerOf2(value) {
-      return (value & (value - 1)) === 0;
-    }
-    
-    createBuffers() {
+  }
+  
+  isPowerOf2(value) {
+    return (value & (value - 1)) === 0;
+  }
+  
+  createBuffers() {
+    try {
       // Create buffers for each model
       for (const type in this.soldierModel) {
         const model = this.soldierModel[type];
@@ -368,13 +497,17 @@ class EnemyRenderer {
           count: modelData.indices.length,
         };
       }
+    } catch (error) {
+      console.error('Error creating buffers:', error);
     }
+  }
+  
+  // Create a new enemy instance
+  createEnemy(enemyObj) {
+    const { type, x, y, id } = enemyObj;
+    const modelType = type === 'red' ? 'red' : 'green';
     
-    // Create a new enemy instance
-    createEnemy(enemyObj) {
-      const { type, x, y, id } = enemyObj;
-      const modelType = type === 'red' ? 'red' : 'green';
-      
+    try {
       // Create animation data for this enemy
       this.enemyInstances[id] = {
         type: modelType,
@@ -400,154 +533,168 @@ class EnemyRenderer {
           }
         }
       };
-      
-      return id;
+    } catch (error) {
+      console.error('Error creating enemy:', error);
     }
     
-    // Update enemy position
-    updateEnemyPosition(id, x, y) {
-      if (this.enemyInstances[id]) {
-        this.enemyInstances[id].position.x = x;
-        this.enemyInstances[id].position.y = y;
+    return id;
+  }
+  
+  // Rest of the implementation with no significant changes
+  // ...
+
+  // Update enemy position
+  updateEnemyPosition(id, x, y) {
+    if (!this.enemyInstances[id]) return;
+    
+    // Store the exact game coordinates
+    this.enemyInstances[id].position.x = x;
+    this.enemyInstances[id].position.y = y;
+    
+    // Update animation frame for walking
+    if (this.enemyInstances[id].state === 'walking') {
+      this.enemyInstances[id].animationFrame += this.enemyInstances[id].animationSpeed;
+      
+      // Calculate direction of movement
+      if (this.enemyInstances[id].lastPosition) {
+        const dx = x - this.enemyInstances[id].lastPosition.x;
+        const dy = y - this.enemyInstances[id].lastPosition.y;
         
-        // Update animation frame for walking
-        if (this.enemyInstances[id].state === 'walking') {
-          this.enemyInstances[id].animationFrame += this.enemyInstances[id].animationSpeed;
-          
-          // Calculate direction of movement
-          if (this.enemyInstances[id].lastPosition) {
-            const dx = x - this.enemyInstances[id].lastPosition.x;
-            const dy = y - this.enemyInstances[id].lastPosition.y;
-            if (Math.abs(dx) > 0.001 || Math.abs(dy) > 0.001) {
-              this.enemyInstances[id].rotation.y = Math.atan2(dx, dy);
-            }
-          }
+        // Only update rotation if there's significant movement
+        if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+          this.enemyInstances[id].rotation = {
+            x: 0,
+            y: Math.atan2(dx, dy),
+            z: 0
+          };
         }
-        
-        // Store last position for movement direction calculation
-        this.enemyInstances[id].lastPosition = { x, y };
       }
     }
     
-    // Apply hit effect to enemy
-    hitEnemy(id, damage, towerType) {
-      if (!this.enemyInstances[id]) return;
+    // Store last position for movement direction calculation
+    this.enemyInstances[id].lastPosition = { x, y };
+  }
+  
+  // Apply hit effect to enemy
+  hitEnemy(id, damage, towerType) {
+    if (!this.enemyInstances[id]) return;
+    
+    const enemy = this.enemyInstances[id];
+    
+    // Update health
+    enemy.health -= damage;
+    
+    // Apply hit state
+    enemy.state = 'hit';
+    enemy.stateTimer = 5; // frames in hit state
+    
+    // Apply effects based on tower type
+    if (towerType === 'red') { // Fire tower
+      enemy.effects.fire.active = true;
+      enemy.effects.fire.strength = 1.0;
+      enemy.effects.fire.timer = 20; // Duration of fire effect in frames
       
+      // Remove frozen effect if hit by fire
+      enemy.effects.frozen.active = false;
+      enemy.effects.frozen.strength = 0;
+      enemy.effects.frozen.timer = 0;
+    } 
+    else if (towerType === 'blue') { // Ice tower
+      enemy.effects.frozen.active = true;
+      enemy.effects.frozen.strength = 1.0;
+      enemy.effects.frozen.timer = 20; // Duration of frozen effect in frames
+      
+      // Remove fire effect if hit by ice
+      enemy.effects.fire.active = false;
+      enemy.effects.fire.strength = 0;
+      enemy.effects.fire.timer = 0;
+    }
+    
+    // Check if enemy is dead
+    if (enemy.health <= 0) {
+      enemy.state = 'dying';
+      enemy.stateTimer = 15; // dying animation frames
+    }
+  }
+  
+  // Remove enemy
+  removeEnemy(id) {
+    delete this.enemyInstances[id];
+  }
+  
+  // Main animation loop
+  animate(timestamp) {
+    if (!this.lastFrame) {
+      this.lastFrame = timestamp;
+    }
+    const deltaTime = timestamp - this.lastFrame;
+    this.lastFrame = timestamp;
+    
+    this.updateAnimations(deltaTime);
+    this.render();
+    
+    requestAnimationFrame((ts) => this.animate(ts));
+  }
+  
+  updateAnimations(deltaTime) {
+    // Process all enemy animations and states
+    for (const id in this.enemyInstances) {
       const enemy = this.enemyInstances[id];
       
-      // Update health
-      enemy.health -= damage;
-      
-      // Apply hit state
-      enemy.state = 'hit';
-      enemy.stateTimer = 5; // frames in hit state
-      
-      // Apply effects based on tower type
-      if (towerType === 'red') { // Fire tower
-        enemy.effects.fire.active = true;
-        enemy.effects.fire.strength = 1.0;
-        enemy.effects.fire.timer = 20; // Duration of fire effect in frames
-        
-        // Remove frozen effect if hit by fire
-        enemy.effects.frozen.active = false;
-        enemy.effects.frozen.strength = 0;
-        enemy.effects.frozen.timer = 0;
-      } 
-      else if (towerType === 'blue') { // Ice tower
-        enemy.effects.frozen.active = true;
-        enemy.effects.frozen.strength = 1.0;
-        enemy.effects.frozen.timer = 20; // Duration of frozen effect in frames
-        
-        // Remove fire effect if hit by ice
-        enemy.effects.fire.active = false;
-        enemy.effects.fire.strength = 0;
-        enemy.effects.fire.timer = 0;
-      }
-      
-      // Check if enemy is dead
-      if (enemy.health <= 0) {
-        enemy.state = 'dying';
-        enemy.stateTimer = 15; // dying animation frames
-      }
-    }
-    
-    // Remove enemy
-    removeEnemy(id) {
-      delete this.enemyInstances[id];
-    }
-    
-    // Main animation loop
-    animate(timestamp) {
-      if (!this.lastFrame) {
-        this.lastFrame = timestamp;
-      }
-      const deltaTime = timestamp - this.lastFrame;
-      this.lastFrame = timestamp;
-      
-      this.updateAnimations(deltaTime);
-      this.render();
-      
-      requestAnimationFrame((ts) => this.animate(ts));
-    }
-    
-    updateAnimations(deltaTime) {
-      // Process all enemy animations and states
-      for (const id in this.enemyInstances) {
-        const enemy = this.enemyInstances[id];
-        
-        // Update state timer
-        if (enemy.stateTimer > 0) {
-          enemy.stateTimer--;
-          if (enemy.stateTimer === 0) {
-            // State transition based on current state
-            if (enemy.state === 'hit') {
-              enemy.state = 'walking';
-            } else if (enemy.state === 'dying') {
-              enemy.state = 'dead';
-            }
-          }
-        }
-        
-        // Update effects
-        if (enemy.effects.frozen.active) {
-          enemy.effects.frozen.timer--;
-          if (enemy.effects.frozen.timer <= 0) {
-            enemy.effects.frozen.active = false;
-            enemy.effects.frozen.strength = 0;
-          } else {
-            // Fade out effect as timer decreases
-            enemy.effects.frozen.strength = enemy.effects.frozen.timer / 20;
-          }
-        }
-        
-        if (enemy.effects.fire.active) {
-          enemy.effects.fire.timer--;
-          if (enemy.effects.fire.timer <= 0) {
-            enemy.effects.fire.active = false;
-            enemy.effects.fire.strength = 0;
-          } else {
-            // Fade out effect as timer decreases
-            enemy.effects.fire.strength = enemy.effects.fire.timer / 20;
-          }
-        }
-        
-        // Remove dead enemies after animation
-        if (enemy.state === 'dead') {
-          // Add simple fade out for dead enemies
-          enemy.fadeOut = (enemy.fadeOut || 1.0) - 0.05;
-          if (enemy.fadeOut <= 0) {
-            delete this.enemyInstances[id];
+      // Update state timer
+      if (enemy.stateTimer > 0) {
+        enemy.stateTimer--;
+        if (enemy.stateTimer === 0) {
+          // State transition based on current state
+          if (enemy.state === 'hit') {
+            enemy.state = 'walking';
+          } else if (enemy.state === 'dying') {
+            enemy.state = 'dead';
           }
         }
       }
-    }
-    
-    render() {
-      if (!this.gl) {
-        this.renderFallback();
-        return;
+      
+      // Update effects
+      if (enemy.effects.frozen.active) {
+        enemy.effects.frozen.timer--;
+        if (enemy.effects.frozen.timer <= 0) {
+          enemy.effects.frozen.active = false;
+          enemy.effects.frozen.strength = 0;
+        } else {
+          // Fade out effect as timer decreases
+          enemy.effects.frozen.strength = enemy.effects.frozen.timer / 20;
+        }
       }
       
+      if (enemy.effects.fire.active) {
+        enemy.effects.fire.timer--;
+        if (enemy.effects.fire.timer <= 0) {
+          enemy.effects.fire.active = false;
+          enemy.effects.fire.strength = 0;
+        } else {
+          // Fade out effect as timer decreases
+          enemy.effects.fire.strength = enemy.effects.fire.timer / 20;
+        }
+      }
+      
+      // Remove dead enemies after animation
+      if (enemy.state === 'dead') {
+        // Add simple fade out for dead enemies
+        enemy.fadeOut = (enemy.fadeOut || 1.0) - 0.05;
+        if (enemy.fadeOut <= 0) {
+          delete this.enemyInstances[id];
+        }
+      }
+    }
+  }
+  
+  render() {
+    if (!this.gl) {
+      this.renderFallback();
+      return;
+    }
+    
+    try {
       // Clear the canvas
       this.gl.clearColor(0.0, 0.0, 0.0, 0.0); // Transparent background
       this.gl.clearDepth(1.0);
@@ -576,9 +723,13 @@ class EnemyRenderer {
       for (const id in this.enemyInstances) {
         this.renderEnemy(id, projectionMatrix);
       }
+    } catch (error) {
+      console.error('Error rendering WebGL scene:', error);
     }
-    
-    renderEnemy(id, projectionMatrix) {
+  }
+  
+  renderEnemy(id, projectionMatrix) {
+    try {
       const enemy = this.enemyInstances[id];
       const model = this.soldierModel[enemy.type];
       
@@ -762,12 +913,16 @@ class EnemyRenderer {
         this.gl.UNSIGNED_SHORT,
         0
       );
+    } catch (error) {
+      console.error('Error rendering enemy:', error);
     }
+  }
+  
+  renderFallback() {
+    // Fallback rendering using Canvas 2D if WebGL is not available
+    if (!this.ctx) return;
     
-    renderFallback() {
-      // Fallback rendering using Canvas 2D if WebGL is not available
-      if (!this.ctx) return;
-      
+    try {
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
       
       for (const id in this.enemyInstances) {
@@ -818,5 +973,8 @@ class EnemyRenderer {
         
         this.ctx.restore();
       }
+    } catch (error) {
+      console.error('Error in fallback rendering:', error);
     }
   }
+}
