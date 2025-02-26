@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       gameOverMessage.innerHTML = `
         <h2>Game Over!</h2>
         <p>You survived until wave ${wave}</p>
-        <p>Final score: ${score}</p>
+        <p>Final score: ${window.game.score}</p>
       `;
       this.swapToScreen(this.gameOverScreen);
       
@@ -275,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
       this.playerHealth = this.DEFAULT_HEALTH;
       this.playerMoney = this.DEFAULT_MONEY;
       this.currentWave = this.DEFAULT_WAVE;
+      this.score = 0; // recording player's score
       this.waveActive = false;
       this.isPaused = false;
       this.enemies = [];
@@ -544,6 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (other.health <= 0) {
             other.element.remove();
             this.playerMoney += other.reward;
+            this.score += other.reward; // calculating scores
             this.ui.updateMoneyDisplay(this.playerMoney);
             this.enemies[j] = null;
           }
@@ -643,6 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (enemy.health <= 0) {
               enemy.element.remove();
               this.playerMoney += enemy.reward;
+              this.score += enemy.reward;
               this.ui.updateMoneyDisplay(this.playerMoney);
               this.enemies[i] = null;
             }
