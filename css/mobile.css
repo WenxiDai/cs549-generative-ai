@@ -51,8 +51,8 @@ h1 {
 /* Game Area Base Sizing */
 #gameArea {
   position: relative;
-  width: 400px;
-  height: 400px;
+  width: 320px;
+  height: 320px;
   margin: 15px auto;
   background: linear-gradient(135deg, #2e2e2e, #1a1a1a);
   background-size: 400% 400%;
@@ -67,8 +67,8 @@ h1 {
   position: absolute;
   top: 0;
   left: 0;
-  width: 400px;
-  height: 400px;
+  width: 320px;
+  height: 320px;
 }
 
 /* Enhanced Start Game Button */
@@ -230,13 +230,13 @@ h1 {
 /* Tablet Adjustments */
 @media screen and (min-width: 601px) and (max-width: 1024px) {
   #gameArea {
-    width: 400px;
-    height: 400px;
+    width: 320px;
+    height: 320px;
   }
   
   #gridContainer {
-    width: 400px;
-    height: 400px;
+    width: 320px;
+    height: 320px;
   }
   
   #gameStats {
