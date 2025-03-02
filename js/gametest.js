@@ -688,7 +688,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             if (enemy.health <= 0) {
-              enemy.element.remove();
+              if (enemy.element && enemy.element.parentNode) {
+                enemy.element.remove();
+              }
               this.playerMoney += enemy.reward;
               this.score += enemy.reward;
               this.ui.updateMoneyDisplay(this.playerMoney);
@@ -697,7 +699,21 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
       });
-      this.enemies = this.enemies.filter(e => e !== null);
+      // Update to:
+      // Remove null entries and ensure all DOM elements are cleaned up
+      this.enemies = this.enemies.filter(e => {
+        if (e === null) return false;
+        if (e.health <= 0) {
+          // Double-check to remove any lingering DOM elements
+          if (e.element && e.element.parentNode) {
+            e.element.remove();
+          }
+          // Add visual death effect
+          this.createDeathEffect(e.x, e.y);
+          return false;
+        }
+        return true;
+    });
     }
     
     // Wave management
