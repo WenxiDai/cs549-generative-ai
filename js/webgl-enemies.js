@@ -773,6 +773,7 @@ class EnemyRenderer {
         animationOffset = -(enemy.stateTimer / 5) * 0.2;
       } else if (enemy.state === 'dying') {
         // Dying animation - fall down
+        return;
         const deathProgress = 1 - (enemy.stateTimer / 15);
         animationOffset = -deathProgress * 0.5;
         mat4.rotateX(
@@ -781,6 +782,7 @@ class EnemyRenderer {
           deathProgress * Math.PI / 2 // Rotate to fall forward
         );
       } else if (enemy.state === 'dead') {
+        return;
         // Dead state - lying on ground
         animationOffset = -0.5;
         mat4.rotateX(
