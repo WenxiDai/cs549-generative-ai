@@ -290,12 +290,12 @@ document.addEventListener('DOMContentLoaded', () => {
     adjustDesktopLayout() {
       // Reset to desktop sizes
       if (this.gameArea) {
-        this.gameArea.style.width = '400px';
-        this.gameArea.style.height = '400px';
+        this.gameArea.style.width = '320px';
+        this.gameArea.style.height = '320px';
         
         if (this.gridContainer) {
-          this.gridContainer.style.width = '400px';
-          this.gridContainer.style.height = '400px';
+          this.gridContainer.style.width = '320px';
+          this.gridContainer.style.height = '320px';
         }
       }
     }
