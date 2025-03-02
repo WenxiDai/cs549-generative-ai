@@ -745,7 +745,7 @@ class EnemyRenderer {
       const gameAreaRect = this.gameArea.getBoundingClientRect();
       const x = (enemy.position.x / gameAreaRect.width) * 2 - 1;
       const y = -((enemy.position.y / gameAreaRect.height) * 2 - 1);
-      console.log(`Enemy ID ${id}: Game X=${enemy.position.x}, Width X=${gameAreaRect.width}`);
+      console.log(`Enemy ID ${id}: Game X=${enemy.position.x}, Width X=${gameAreaRect.width}, WebGL X=${x}`);
       
       mat4.translate(
         modelViewMatrix,
