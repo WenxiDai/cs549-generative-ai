@@ -721,6 +721,8 @@ class EnemyRenderer {
       
       // Render each enemy
       for (const id in this.enemyInstances) {
+        const enemy = this.enemyInstances[id];
+        if (enemy.state == 'dying' || enemy.state == 'dead') continue;
         this.renderEnemy(id, projectionMatrix);
       }
     } catch (error) {
