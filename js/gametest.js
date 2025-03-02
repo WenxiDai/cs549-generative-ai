@@ -309,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
       this.gridSize = 10;
       this.cellSize = window.gameScaling.currentCellSize;
       // Update cell size if mobile
-      this.cellSize = ui.isMobile ? 32 : 40;
+      //this.cellSize = ui.isMobile ? 32 : 40;
       
       // Default game values
       this.DEFAULT_HEALTH = 10;
