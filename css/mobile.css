@@ -34,7 +34,7 @@ h1 {
   margin-bottom: 15px;
   flex-wrap: wrap;
   width: 100%;
-  max-width: 400px;
+  max-width: 320px;
 }
 
 .stat-box {
@@ -240,7 +240,7 @@ h1 {
   }
   
   #gameStats {
-    max-width: 400px;
+    max-width: 320px;
   }
   
   h1 {
