@@ -929,7 +929,7 @@ class EnemyRenderer {
       
       for (const id in this.enemyInstances) {
         const enemy = this.enemyInstances[id];
-        
+        if (enemy.state == 'dying' || enemy.state == 'dead') continue;
         this.ctx.save();
         this.ctx.translate(enemy.position.x, enemy.position.y);
         
