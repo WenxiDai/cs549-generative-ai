@@ -2,15 +2,15 @@
 (function() {
     // Global game scale factors
     window.gameScaling = {
-      defaultCellSize: 40, // Desktop cell size
-      currentCellSize: 40, // Will be updated based on viewport
+      defaultCellSize: 32, // Desktop cell size
+      currentCellSize: 32, // Will be updated based on viewport
       scaleFactor: 1       // Ratio of current/default
     };
     
     // Function to update scaling based on viewport
     window.updateGameScaling = function() {
       const isMobile = window.innerWidth <= 600;
-      const newCellSize = isMobile ? 32 : 40;
+      const newCellSize = 32//isMobile ? 32 : 40;
       
       window.gameScaling.currentCellSize = newCellSize;
       window.gameScaling.scaleFactor = newCellSize / window.gameScaling.defaultCellSize;
