@@ -181,6 +181,9 @@ document.addEventListener('DOMContentLoaded', () => {
       this.viewportHeight = window.innerHeight;
       this.isMobile = this.viewportWidth <= 600;
       
+      // Update global scaling
+      window.updateGameScaling();
+      
       // If we're on the game over screen, update its background
       if (this.gameOverScreen.classList.contains('active')) {
         this.setGameOverBackground(this.isMobile);
@@ -215,20 +218,48 @@ document.addEventListener('DOMContentLoaded', () => {
       this.viewportHeight = window.innerHeight;
       this.isMobile = this.viewportWidth <= 600;
       
-      // Update grid size if needed
+      // Update global scaling
+      window.updateGameScaling();
+      
+      // If we're on the game over screen, update its background
+      if (this.gameOverScreen.classList.contains('active')) {
+        this.setGameOverBackground(this.isMobile);
+      }
+      
+      // Use mobile layout if needed
       if (this.isMobile) {
-        // Use mobile layout
         this.adjustMobileLayout();
       } else {
-        // Use desktop layout
         this.adjustDesktopLayout();
+      }
+      
+      // Update enemy positions if game is active
+      if (window.game && window.game.logic && window.game.logic.enemies) {
+        window.game.logic.enemies.forEach(enemy => {
+          if (enemy && enemy.pathIndex !== undefined) {
+            const pathPos = window.game.logic.randomPath[enemy.pathIndex];
+            if (pathPos) {
+              const cellCenter = window.game.logic.getCellCenter(pathPos.r, pathPos.c);
+              enemy.x = cellCenter.x;
+              enemy.y = cellCenter.y;
+              
+              if (enemy.element) {
+                enemy.element.style.left = enemy.x + "px";
+                enemy.element.style.top = enemy.y + "px";
+              }
+            }
+          }
+        });
       }
     }
     
     adjustMobileLayout() {
-      // Adjust container sizes for mobile
+      // Update the scaling first
+      window.updateGameScaling();
+      const cellSize = window.gameScaling.currentCellSize;
+      
+      // Adjust container sizes for the current device
       if (this.gameArea) {
-        const cellSize = this.isMobile ? 32 : 40;
         const gridSize = 10; // Keep your original grid size
         const gameAreaSize = cellSize * gridSize;
         
@@ -239,6 +270,20 @@ document.addEventListener('DOMContentLoaded', () => {
           this.gridContainer.style.width = `${gameAreaSize}px`;
           this.gridContainer.style.height = `${gameAreaSize}px`;
         }
+        
+        // Update cell sizes
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+          cell.style.width = `${cellSize}px`;
+          cell.style.height = `${cellSize}px`;
+        });
+        
+        // Update tower sizes
+        const towers = document.querySelectorAll('.tower');
+        towers.forEach(tower => {
+          tower.style.width = `${cellSize}px`;
+          tower.style.height = `${cellSize}px`;
+        });
       }
     }
     
@@ -262,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Game constants
       this.gridSize = 10;
-      this.cellSize = 40;
+      this.cellSize = window.gameScaling.currentCellSize;
       // Update cell size if mobile
       this.cellSize = ui.isMobile ? 32 : 40;
       
@@ -758,6 +803,8 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let col = 0; col < this.gridSize; col++) {
           const cellDiv = document.createElement("div");
           cellDiv.classList.add("cell");
+          cellDiv.style.width = `${cellSize}px`;
+          cellDiv.style.height = `${cellSize}px`;
           
           // hint to the user that they can place towers here
           cellDiv.title = "tap to place a tower";
@@ -836,7 +883,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update getCellCenter to account for dynamic cell size
     getCellCenter(row, col) {
-      const offset = (this.cellSize - 20) / 2;
+      const cellSize = window.gameScaling.currentCellSize;
+      const offset = (cellSize - 20) / 2;
       return {
         x: col * this.cellSize + offset,
         y: row * this.cellSize + offset
@@ -845,10 +893,43 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Update getTowerCenter method
     getTowerCenter(row, col) {
+      const cellSize = window.gameScaling.currentCellSize;
       return {
-        x: col * this.cellSize + this.cellSize / 2,
-        y: row * this.cellSize + this.cellSize / 2
+        x: col * cellSize + this.cellSize / 2,
+        y: row * cellSize + this.cellSize / 2
       };
+    }
+  
+    updateCellSize() {
+      // Update to the current global cell size
+      this.cellSize = window.gameScaling.currentCellSize;
+      
+      // Update the size of all cells in the DOM
+      for (let row = 0; row < this.gridSize; row++) {
+        for (let col = 0; col < this.gridSize; col++) {
+          if (this.cells[row][col]) {
+            this.cells[row][col].style.width = `${this.cellSize}px`;
+            this.cells[row][col].style.height = `${this.cellSize}px`;
+          }
+        }
+      }
+      
+      // Update enemy positions based on new cell size
+      this.enemies.forEach(enemy => {
+        if (enemy && enemy.pathIndex !== undefined) {
+          const pathPos = this.randomPath[enemy.pathIndex];
+          if (pathPos) {
+            const cellCenter = this.getCellCenter(pathPos.r, pathPos.c);
+            enemy.x = cellCenter.x;
+            enemy.y = cellCenter.y;
+            
+            if (enemy.element) {
+              enemy.element.style.left = enemy.x + "px";
+              enemy.element.style.top = enemy.y + "px";
+            }
+          }
+        }
+      });
     }
   }
 
