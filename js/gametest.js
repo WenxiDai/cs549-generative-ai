@@ -795,6 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Grid setup
     createGrid(gridContainer) {
+      const cellSize = window.gameScaling.currentCellSize;
       for (let row = 0; row < this.gridSize; row++) {
         const rowDiv = document.createElement("div");
         rowDiv.classList.add("row");
