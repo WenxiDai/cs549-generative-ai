@@ -337,7 +337,7 @@ button.green-btn:hover { transform: scale(1.05); }
 }
 
 /* Color picker overlay for mobile */
-/*
+
 @media screen and (max-width: 600px) {
   #colorPicker {
     width: 90%;
@@ -358,10 +358,10 @@ button.green-btn:hover { transform: scale(1.05); }
     width: 16px;
     height: 16px;
   }
-} */
+} 
 
 /* Fix for fixed positioning issues on mobile */
-/*
+
 @media screen and (max-width: 600px) {
   #colorPickerOverlay {
     position: fixed;
@@ -386,4 +386,3 @@ button.green-btn:hover { transform: scale(1.05); }
     padding: 15px;
   }
 }
-*/
