@@ -256,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     adjustMobileLayout() {
       // Update the scaling first
       window.updateGameScaling();
-      const cellSize = window.gameScaling.currentCellSize;
+      const cellSize = 32;//window.gameScaling.currentCellSize;
       
       // Adjust container sizes for the current device
       if (this.gameArea) {
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // Game constants
       this.gridSize = 10;
-      this.cellSize = window.gameScaling.currentCellSize;
+      this.cellSize = 32; //window.gameScaling.currentCellSize;
       // Update cell size if mobile
       //this.cellSize = ui.isMobile ? 32 : 40;
       
@@ -795,7 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Grid setup
     createGrid(gridContainer) {
-      const cellSize = window.gameScaling.currentCellSize;
+      const cellSize = 32;//window.gameScaling.currentCellSize;
       for (let row = 0; row < this.gridSize; row++) {
         const rowDiv = document.createElement("div");
         rowDiv.classList.add("row");
@@ -884,7 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update getCellCenter to account for dynamic cell size
     getCellCenter(row, col) {
-      const cellSize = window.gameScaling.currentCellSize;
+      const cellSize = 32;//window.gameScaling.currentCellSize;
       const offset = (cellSize - 20) / 2;
       return {
         x: col * this.cellSize + offset,
@@ -894,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Update getTowerCenter method
     getTowerCenter(row, col) {
-      const cellSize = window.gameScaling.currentCellSize;
+      const cellSize = 32;//window.gameScaling.currentCellSize;
       return {
         x: col * cellSize + this.cellSize / 2,
         y: row * cellSize + this.cellSize / 2
@@ -903,7 +903,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     updateCellSize() {
       // Update to the current global cell size
-      this.cellSize = window.gameScaling.currentCellSize;
+      this.cellSize = 32;//window.gameScaling.currentCellSize;
       
       // Update the size of all cells in the DOM
       for (let row = 0; row < this.gridSize; row++) {
