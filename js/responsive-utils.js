@@ -10,7 +10,7 @@
     // Function to update scaling based on viewport
     window.updateGameScaling = function() {
       const isMobile = window.innerWidth <= 600;
-      const newCellSize = 32//isMobile ? 32 : 40;
+      const newCellSize = 32; //isMobile ? 32 : 40;
       
       window.gameScaling.currentCellSize = newCellSize;
       window.gameScaling.scaleFactor = newCellSize / window.gameScaling.defaultCellSize;
