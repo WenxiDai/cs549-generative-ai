@@ -228,6 +228,7 @@ h1 {
 }
 
 /* Tablet Adjustments */
+/*
 @media screen and (min-width: 601px) and (max-width: 1024px) {
   #gameArea {
     width: 320px;
@@ -247,8 +248,10 @@ h1 {
     font-size: 1.8rem;
   }
 }
+*/
 
 /* Mobile Phone Adjustments */
+/*
 @media screen and (max-width: 600px) {
   h1 {
     font-size: 1.4rem;
@@ -328,8 +331,10 @@ h1 {
     padding: 20px;
   }
 }
+*/
 
 /* Extra Small Devices (like iPhone SE) */
+/*
 @media screen and (max-width: 375px) {
   #gameArea {
     width: 280px;
@@ -383,8 +388,10 @@ h1 {
     padding: 15px;
   }
 }
+ */ 
 
 /* Dynamic Grid Adjustment - Ensures grid cells always fit properly */
+/*
 @media screen and (max-width: 600px) {
   .row {
     display: flex;
@@ -409,6 +416,7 @@ h1 {
 }
 
 /* Landscape Mode Adjustments */
+/*
 @media screen and (max-height: 500px) and (orientation: landscape) {
   body {
     padding: 5px;
@@ -448,6 +456,7 @@ h1 {
     max-height: 70vh;
   }
 }
+*/
 
 /* Touch-specific improvements */
 @media (hover: none) and (pointer: coarse) {
@@ -484,15 +493,17 @@ h1 {
 }
 
 /* Make projectiles scale properly */
+/*
 @media screen and (max-width: 600px) {
-  /* Assuming projectiles are created with a specific class or style */
+  // Assuming projectiles are created with a specific class or style 
   div[style*="position: absolute"][style*="width: 10px"][style*="height: 10px"][style*="border-radius: 50%"] {
     width: 8px !important;
     height: 8px !important;
   }
 }
-
+*/
 /* Animation fix for low-end devices */
+/*
 @media screen and (max-width: 600px) {
   @keyframes gradientAnimation {
     0% { background-position: 0% 50%; }
@@ -500,11 +511,13 @@ h1 {
   }
   
   #gameArea {
-    animation: gradientAnimation 30s ease infinite; /* Slower animation for performance */
+    animation: gradientAnimation 30s ease infinite; // Slower animation for performance 
   }
 }
+*/
 
 /* Ensure game responsiveness updates dynamically */
+/*
 @media screen and (max-width: 320px) {
   #gameArea, #gridContainer {
     width: 260px;
@@ -530,6 +543,7 @@ h1 {
     padding: 4px;
   }
 }
+*/
 
 /* Loading State Indicator */
 .loading {
@@ -586,11 +600,13 @@ body {
 }
 
 /* Tablet and desktop background (3:4) */
+/*
 @media screen and (min-width: 601px) {
   body {
     background-image: url('../assets/images/splash_screen_tablet.webp');
   }
 }
+*/
 
 /* Semi-transparent overlays for each screen */
 .screen {
@@ -669,6 +685,7 @@ body {
 }
 
 /* Tablet and desktop background (3:4) */
+/*
 @media screen and (min-width: 601px) {
   #game-over-screen::before {
     background-image: url('../assets/images/lose_splash_tablet.webp');
@@ -678,6 +695,7 @@ body {
     font-size: 32px;
   }
 }
+*/
 
 /* Animation for game over screen */
 @keyframes fadeInGameOver {
